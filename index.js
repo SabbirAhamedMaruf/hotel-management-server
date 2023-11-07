@@ -30,7 +30,7 @@ async function run() {
     const homePageReviewCollection = database.collection("HomePageReview");
     const roomsCollection = database.collection("rooms");
     const bookedRoomsCollection = database.collection("bookedRooms");
-
+    const userReviewCollection = database.collection("userReview");
 
     // jwt token generation
     app.post("/jwt", async (req, res) => {
@@ -57,8 +57,14 @@ async function run() {
       const currentRoomId = req.params.id;
       const query = { _id: new ObjectId(currentRoomId) };
       const resut = await roomsCollection.findOne(query);
-      res.send(resut);
+      const reviewId = {id: currentRoomId}
+      const reviews = await userReviewCollection.find(reviewId).toArray();
+      res.send({roomData:resut,reviews:reviews});
     });
+
+
+
+
 
 
 
@@ -87,7 +93,7 @@ async function run() {
 
     // Fetching data for featured rooms
     app.get("/featuredProduct", async (req, res) => {
-      const query = { featured: "true" };
+      const query = { featured: true };
       const options = {
         projection: { _id: 1, photo: 1, price: 1 },
       };
@@ -101,7 +107,10 @@ async function run() {
     app.post("/mybookings",async(req,res)=>{
       const currentUserEmail = req.body.userEmail;
       const query = {userEmail : currentUserEmail}
-      const currentUserBookings = await bookedRoomsCollection.find(query).toArray();
+      const options ={
+        projection : {currentRoomData:1,_id:1}
+      }
+      const currentUserBookings = await bookedRoomsCollection.find(query,options).toArray();
       res.send(currentUserBookings);
     })
 
@@ -113,6 +122,7 @@ async function run() {
     // add rooms from add room page
     app.post("/addroom", async (req, res) => {
       const currentRoomData = req.body;
+      console.log(currentRoomData);
       const result = await roomsCollection.insertOne(currentRoomData);
       res.send(result);
     });
@@ -121,26 +131,46 @@ async function run() {
 
 
 
+ // >Need to apply jwt token verification
+    // adding review text for review field
+    app.patch("/addreview",async(req,res)=>{
+        const userReview = req.body;
+        const roomUpdateId = {_id: new ObjectId(userReview.id)};
+        const roomDataFromRoomCollection = await roomsCollection.findOne(roomUpdateId);
+        const updateCount = roomDataFromRoomCollection.reviewCount;
+        const currentReviewCount = updateCount+1;
+        const updateDoc = {
+          $set :{
+            reviewCount:currentReviewCount
+          }
+        }
+        const reviewCountUpdate = await roomsCollection.updateOne(roomUpdateId,updateDoc);
+        const result = await userReviewCollection.insertOne(userReview);
+        res.send(result)
+    })
 
 
 
+    
 
-
+ // >Need to apply jwt token verification
     app.patch("/rooms/singleRoomDetails/bookRoom",async(req,res)=>{
       const userEmail = req.query.user;
       const currentRoomData = req.body.bookingData;
-  
+
       // Updating availablity state
       const userBookedRoomId = currentRoomData.roomId;
+      const bookedDate = currentRoomData.date;
+      console.log(bookedDate);
       const query ={_id : new ObjectId(userBookedRoomId)}
 
       const updateDoc = {
         $set :{
-          available : false
+          available : false,
+          lastbookDate: bookedDate
         }
       }
       const roomDataFromRoomCollection = await roomsCollection.updateOne(query,updateDoc);
-
       // Inset booked data on bookedRooms collection
       const data = {userEmail,currentRoomData}
       const result = await bookedRoomsCollection.insertOne(data);
