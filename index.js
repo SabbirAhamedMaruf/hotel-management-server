@@ -10,7 +10,7 @@ app.use(express.json());
 require('dotenv').config();
 
 // Mongodb config
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.ILK_LODGE_USER}:${process.env.ILK_LODGE_PASS}@cluster0.pzharqa.mongodb.net/?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, {
@@ -49,7 +49,13 @@ async function run() {
     })
 
 
-
+    // Get single room data for single room detail page
+    app.get("/rooms/singleRoomDetails/:id",async(req,res)=>{
+      const currentRoomId = req.params.id;
+      const query = { _id: new ObjectId(currentRoomId) };
+      const resut = await roomsCollection.findOne(query);
+      res.send(resut);
+    })
 
 
 
