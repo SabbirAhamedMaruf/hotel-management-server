@@ -63,11 +63,18 @@ async function run() {
 
     // Fetching room data 
     app.get("/rooms",async(req,res)=>{
+      const sortData = req.query.sortByHighToLow;
+      console.log(sortData);
       const options ={
         projection : {_id:1, photo:1, price:1}
       }
-      const result = await roomsCollection.find({},options).toArray()
-      res.send(result);
+      if(sortData === "true"){
+         const result = await roomsCollection.find({},options).sort({price: -1}).toArray()
+         res.send(result)
+      }else{
+        const result = await roomsCollection.find({},options).sort({price: 1}).toArray();
+        res.send(result)
+      }
     })
 
 
