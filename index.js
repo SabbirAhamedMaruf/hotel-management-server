@@ -29,9 +29,9 @@ async function run() {
     const database = client.db("Ilk_Lodge");
     const homePageReviewCollection = database.collection("HomePageReview");
     const roomsCollection = database.collection("rooms");
+    const bookedRoomsCollection = database.collection("bookedRooms");
 
 
-    
     // jwt token generation
     app.post("/jwt", async (req, res) => {
       const payload = req.body;
@@ -85,7 +85,6 @@ async function run() {
 
 
 
-
     // Fetching data for featured rooms
     app.get("/featuredProduct", async (req, res) => {
       const query = { featured: "true" };
@@ -97,15 +96,59 @@ async function run() {
     });
 
 
+    // >Need to apply jwt token verification
+    // User booked rooms data for mybooking page
+    app.post("/mybookings",async(req,res)=>{
+      const currentUserEmail = req.body.userEmail;
+      const query = {userEmail : currentUserEmail}
+      const currentUserBookings = await bookedRoomsCollection.find(query).toArray();
+      res.send(currentUserBookings);
+    })
 
 
 
+
+
+   // >Need to apply jwt token verification
     // add rooms from add room page
     app.post("/addroom", async (req, res) => {
       const currentRoomData = req.body;
       const result = await roomsCollection.insertOne(currentRoomData);
       res.send(result);
     });
+
+
+
+
+
+
+
+
+
+
+    app.patch("/rooms/singleRoomDetails/bookRoom",async(req,res)=>{
+      const userEmail = req.query.user;
+      const currentRoomData = req.body.bookingData;
+  
+      // Updating availablity state
+      const userBookedRoomId = currentRoomData.roomId;
+      const query ={_id : new ObjectId(userBookedRoomId)}
+
+      const updateDoc = {
+        $set :{
+          available : false
+        }
+      }
+      const roomDataFromRoomCollection = await roomsCollection.updateOne(query,updateDoc);
+
+      // Inset booked data on bookedRooms collection
+      const data = {userEmail,currentRoomData}
+      const result = await bookedRoomsCollection.insertOne(data);
+      res.send(result);
+    })
+
+
+
 
 
 
