@@ -28,12 +28,9 @@ async function run() {
     // database
     const database = client.db("Ilk_Lodge");
     const homePageReviewCollection = database.collection("HomePageReview");
+    const roomsCollection  = database.collection("rooms");
 
-    // Home page hotel testimonials
-    app.get("/testimonial",async(req,res)=>{
-      const testimonialData = await homePageReviewCollection.find().toArray();
-      res.send(testimonialData)
-    })
+
 
     // jwt token generation
     app.post("/jwt",async(req,res)=>{
@@ -42,7 +39,52 @@ async function run() {
       res.cookie("token",token).send({"success" : true})
     })
 
-    // > Cookie is okey.
+
+
+
+    // Home page hotel testimonials
+    app.get("/testimonial",async(req,res)=>{
+      const testimonialData = await homePageReviewCollection.find().toArray();
+      res.send(testimonialData)
+    })
+
+
+
+
+
+
+
+
+    // Fetching room data 
+    app.get("/rooms",async(req,res)=>{
+      const options ={
+        projection : {_id:1, photo:1, price:1}
+      }
+      const result = await roomsCollection.find({},options).toArray()
+      res.send(result);
+    })
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // add rooms from add room page
+    app.post("/addroom",async(req,res)=>{
+      const currentRoomData = req.body;
+      const result = await roomsCollection.insertOne(currentRoomData);
+      res.send(result);
+    })
+
+
+
     
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
