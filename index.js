@@ -46,9 +46,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // TODO delete this line before vercel deploy
     await client.connect();
-
     // database
     const database = client.db("Ilk_Lodge");
     const homePageReviewCollection = database.collection("HomePageReview");
@@ -66,8 +64,7 @@ async function run() {
       res
         .cookie("token", token, {
           httpOnly: true,
-          // process.env.NODE_ENV === "production",
-          secure: true,
+          secure: process.env.NODE_ENV === "production",
           sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
         })
         .send({ success: true });
@@ -101,20 +98,33 @@ async function run() {
 
     // Fetching room data
     app.get("/rooms", async (req, res) => {
-      const sortData = req.query.sortByHighToLow;
+      const sortData = req.query.sortRooms;
+      AvailableQuery = {available : true}
       const options = {
         projection: { _id: 1, photo: 1, price: 1, reviewCount: 1 },
       };
-      if (sortData === "true") {
-        const result = await roomsCollection
+      if(sortData === "high"){
+          const result = await roomsCollection
           .find({}, options)
           .sort({ price: -1 })
           .toArray();
-        res.send(result);
-      } else {
+          res.send(result);
+      }
+      else if(sortData === "low") {
         const result = await roomsCollection
           .find({}, options)
           .sort({ price: 1 })
+          .toArray();
+        res.send(result);
+      }
+      else if(sortData === "availableroom"){
+        const result = await roomsCollection
+          .find(AvailableQuery)
+          .toArray();
+        res.send(result);
+      }else{
+        const result = await roomsCollection
+          .find()
           .toArray();
         res.send(result);
       }
