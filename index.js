@@ -9,7 +9,8 @@ const cookieParser = require("cookie-parser");
 app.use(
   cors({
     origin: [
-      "https://654bbeed40b0ee1727cfa53b--chimerical-treacle-35dd40.netlify.app",
+      // "https://654bbeed40b0ee1727cfa53b--chimerical-treacle-35dd40.netlify.app",
+      "http://localhost:5173"
     ],
     credentials: true,
   })
@@ -59,6 +60,7 @@ async function run() {
     const roomsCollection = database.collection("rooms");
     const bookedRoomsCollection = database.collection("bookedRooms");
     const userReviewCollection = database.collection("userReview");
+    const newsCollection = database.collection("news");
 
     // jwt token generation
     app.post("/jwt", async (req, res) => {
@@ -125,6 +127,24 @@ async function run() {
         res.send(result);
       }
     });
+
+    app.get("/promotions", async (req, res) => {
+      AvailableQuery = { available: true, price : {$lt : 48} };
+      const options = {
+        projection: { _id: 1, photo: 1, price: 1 },
+      };
+      
+      const result = await roomsCollection.find(AvailableQuery,options).toArray();
+      res.send(result);
+    });
+
+    app.get("/news",async(req,res)=>{
+      const result =await newsCollection.find().toArray();
+      res.send(result)
+    })
+
+
+
 
     // Fetching data for featured rooms
     app.get("/featuredProduct", async (req, res) => {
