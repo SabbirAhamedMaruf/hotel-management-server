@@ -4,14 +4,11 @@ const app = express();
 const port = process.env.PORT || 5000;
 var jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
-
+require("dotenv").config();
 // Custom middleware
 app.use(
   cors({
-    origin: [
-      // "https://654bbeed40b0ee1727cfa53b--chimerical-treacle-35dd40.netlify.app",
-      "http://localhost:5173"
-    ],
+    origin: [process.env.LOCAL_SERVER],
     credentials: true,
   })
 );
@@ -129,30 +126,27 @@ async function run() {
     });
 
     app.get("/promotions", async (req, res) => {
-      AvailableQuery = { available: true, price : {$lt : 48} };
+      AvailableQuery = { available: true, price: { $lt: 48 } };
       const options = {
-        projection: { _id: 1, photo: 1, price: 1 },
+        projection: { _id: 1, photo: 1, price: 1, type: 1 },
       };
-      
-      const result = await roomsCollection.find(AvailableQuery,options).toArray();
+
+      const result = await roomsCollection
+        .find(AvailableQuery, options)
+        .toArray();
       res.send(result);
     });
 
-    app.get("/news",async(req,res)=>{
-      const result =await newsCollection.find().toArray();
-      res.send(result)
-    })
-
-
-
+    app.get("/news", async (req, res) => {
+      const result = await newsCollection.find().toArray();
+      res.send(result);
+    });
 
     // Fetching data for featured rooms
     app.get("/featuredProduct", async (req, res) => {
       const query = { featured: true };
-      const options = {
-        projection: { _id: 1, photo: 1, price: 1 },
-      };
-      const result = await roomsCollection.find(query, options).toArray();
+     
+      const result = await roomsCollection.find(query).toArray();
       res.send(result);
     });
 
